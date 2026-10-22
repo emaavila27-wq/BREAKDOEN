@@ -1,6 +1,6 @@
 # BREAKDOWN — Entrenamiento & Nutrición
 
-Sitio para vender planes de entrenamiento y alimentación, con estética metalcore / nu-metal.
+Sitio para vender planes de entrenamiento y alimentación, con estética deathcore / metal extremo.
 
 - **Planes**: rutina, dieta (bajar de peso o ganar masa), combo y asesoría 1 a 1.
 - **Pago** con Mercado Pago (tarjeta, débito, dinero en cuenta, efectivo).
@@ -21,13 +21,21 @@ No hace falta base de datos: las respuestas del cuestionario viajan dentro del p
 | `lib/config.js` | **Nombre, precios, WhatsApp, Instagram.** Lo único que tenés que editar. |
 | `lib/plans.js` | Cómo se arma la rutina y la dieta (ejercicios, alimentos, cálculos). |
 | `lib/email.js` | Diseño de los mails. |
-| `public/` | La página (HTML, CSS, JS). |
+| `public/` | La página (HTML, CSS, JS) y el logo generado. |
+| `scripts/generate-logo.js` | Generador del logo con púas (letra New Rocker, licencia OFL). |
 | `api/` | Funciones del servidor (pago, webhook, contacto). |
 
 ## Puesta en marcha (≈ 30 min)
 
 ### 1. Editá tus datos
 En `lib/config.js` cambiá nombre de marca, precios, tu WhatsApp (formato `5491122334455`) e Instagram.
+
+**Logo:** se genera automáticamente con púas a partir del nombre de la marca. Si cambiás el nombre, o querés otra variante de púas (cambiando `logoSeed`), corré:
+
+```bash
+npm install
+npm run logo
+```
 
 ### 2. Mail con Resend (gratis hasta 3.000 mails/mes)
 1. Creá una cuenta en [resend.com](https://resend.com).

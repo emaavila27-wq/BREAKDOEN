@@ -30,10 +30,6 @@
   // ---------- Planes ----------
   function renderPlans() {
     const { brand, currency, products } = catalog;
-    document.querySelectorAll('[data-brand]').forEach((el) => {
-      el.textContent = brand.name;
-      if (el.dataset.text !== undefined) el.dataset.text = brand.name;
-    });
     $('#wa-link').href = `https://wa.me/${brand.whatsapp}?text=${encodeURIComponent('¡Hola! Quiero consultar por los planes de entrenamiento.')}`;
     $('#ig-link').href = brand.instagram;
 
