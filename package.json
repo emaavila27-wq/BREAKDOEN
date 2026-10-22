@@ -9,7 +9,8 @@
     "dev": "vercel dev",
     "test": "node --test",
     "preview-email": "node scripts/preview-email.js",
-    "logo": "node scripts/generate-logo.js"
+    "logo": "node scripts/generate-logo.js",
+    "background": "node scripts/generate-background.js"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

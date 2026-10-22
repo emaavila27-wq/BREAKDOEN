@@ -17,7 +17,7 @@
 html { scroll-behavior: smooth; overflow-x: clip; }
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--bg) url(bg-grunge.svg);
   color: var(--text);
   font: 16px/1.6 var(--body);
   overflow-x: clip;
@@ -98,13 +98,13 @@ body::before {
   text-align: center;
   overflow: hidden;
 }
-.hero-watermark {
-  position: absolute; left: 50%; top: 46%;
-  width: min(2000px, 260vw);
-  transform: translate(-50%, -50%);
-  opacity: .05;
+.hero::before { /* árbol seco con chorreaduras detrás del logo */
+  content: '';
+  position: absolute; inset: -40px 0 0;
+  background: url(bg-tree.svg) center 30% / max(1500px, 100%) auto no-repeat;
   pointer-events: none;
 }
+.hero > * { position: relative; }
 .kicker {
   margin: 0 0 4px;
   font: 800 clamp(14px, 2.4vw, 22px)/1.1 var(--heavy);
@@ -143,7 +143,7 @@ body::before {
 
 /* ---------- Secciones ---------- */
 .section { padding: clamp(64px, 10vw, 120px) clamp(16px, 5vw, 64px); max-width: 1240px; margin: 0 auto; }
-.section-dark { max-width: none; background: var(--bg-2); border-block: 1px solid var(--line); }
+.section-dark { max-width: none; background: rgba(0, 0, 0, .35); border-block: 1px solid var(--line); }
 .section-dark > * { max-width: 1240px; margin-left: auto; margin-right: auto; }
 .title {
   margin: 0 0 14px;
@@ -169,22 +169,8 @@ body::before {
   padding: 28px 24px;
   background: linear-gradient(180deg, #1d1d1d, #151515);
   border: 1px solid var(--line);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); /* esquinas rotas */
   transition: border-color .2s, transform .2s;
-}
-.card::after { /* esquinas rotas */
-  content: '';
-  position: absolute; inset: -1px;
-  pointer-events: none;
-  background:
-    linear-gradient(135deg, var(--bg) 14px, transparent 15px) top left,
-    linear-gradient(-45deg, var(--bg) 14px, transparent 15px) bottom right;
-  background-repeat: no-repeat;
-}
-.section-dark .card::after {
-  background:
-    linear-gradient(135deg, var(--bg-2) 14px, transparent 15px) top left,
-    linear-gradient(-45deg, var(--bg-2) 14px, transparent 15px) bottom right;
-  background-repeat: no-repeat;
 }
 .card:hover { border-color: var(--red); transform: translateY(-4px); }
 .card h3 { margin: 6px 0 10px; font: 900 20px/1.15 var(--heavy); letter-spacing: .08em; text-transform: uppercase; }
@@ -277,7 +263,7 @@ body::before {
 @media (max-width: 480px) {
   .form .row { grid-template-columns: 1fr; }
   .hero-logo { width: 118vw; margin: -10px 0 -4px; }
-  .hero-watermark { top: 26%; width: 320vw; }
+  .hero::before { background-size: 1100px auto; background-position: center 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

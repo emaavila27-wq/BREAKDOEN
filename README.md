@@ -23,6 +23,8 @@ No hace falta base de datos: las respuestas del cuestionario viajan dentro del p
 | `lib/email.js` | Diseño de los mails. |
 | `public/` | La página (HTML, CSS, JS) y el logo generado. |
 | `scripts/generate-logo.js` | Generador del logo con púas (letra New Rocker, licencia OFL). |
+| `scripts/generate-background.js` | Generador del árbol seco con chorreaduras del fondo de la portada (`npm run background`). |
+| `public/bg-grunge.svg` | Textura de pintura sucia del fondo de toda la página. |
 | `api/` | Funciones del servidor (pago, webhook, contacto). |
 
 ## Puesta en marcha (≈ 30 min)
