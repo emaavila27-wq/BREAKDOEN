@@ -1,0 +1,11 @@
+{
+  "name": "breakdown-training",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "node --test",
+    "preview-email": "node scripts/preview-email.js"
+  }
+}
