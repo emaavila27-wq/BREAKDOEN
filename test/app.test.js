@@ -33,14 +33,27 @@ test('parseOrder valida y deja solo los campos necesarios', () => {
   assert.ok(parseOrder({ producto: 'nada' }).errors);
 });
 
-test('rutina: un día por cada día elegido, en gym y en casa', () => {
+test('rutina: un día por cada día elegido, en gym, en casa y calistenia', () => {
   for (const dias of [3, 4, 5]) {
-    for (const lugar of ['gym', 'casa']) {
-      const plan = buildTrainingPlan({ objetivo: 'masa', nivel: 'avanzado', lugar, dias });
-      assert.equal(plan.days.length, dias);
-      for (const day of plan.days) for (const ex of day.exercises) assert.ok(ex.name && ex.sets && ex.reps);
+    for (const lugar of ['gym', 'casa', 'calistenia']) {
+      for (const nivel of ['principiante', 'intermedio', 'avanzado']) {
+        const plan = buildTrainingPlan({ objetivo: 'masa', nivel, lugar, dias });
+        assert.equal(plan.days.length, dias);
+        for (const day of plan.days) for (const ex of day.exercises) assert.ok(ex.name && ex.sets && ex.reps);
+      }
     }
   }
+});
+
+test('calistenia: ejercicios según el nivel y equipo indicado', () => {
+  const base = { objetivo: 'masa', lugar: 'calistenia', dias: 4 };
+  const novato = buildTrainingPlan({ ...base, nivel: 'principiante' });
+  const pro = buildTrainingPlan({ ...base, nivel: 'avanzado' });
+  const names = (plan) => plan.days.flatMap((d) => d.exercises.map((e) => e.name));
+  assert.ok(names(novato).includes('Dominadas negativas (bajada en 5 seg)'));
+  assert.ok(names(pro).includes('Pistol squat (sentadilla a una pierna)'));
+  assert.match(novato.equipment, /barra de dominadas y paralelas/);
+  assert.equal(parseOrder({ ...combo, lugar: 'calistenia' }).order.lugar, 'calistenia');
 });
 
 test('dieta: macros cierran con las calorías y el menú se acerca al objetivo', () => {
