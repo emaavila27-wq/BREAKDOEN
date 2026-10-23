@@ -58,7 +58,7 @@ test('calistenia: ejercicios según el nivel y equipo indicado', () => {
 
 test('dieta: macros cierran con las calorías y el menú se acerca al objetivo', () => {
   for (const objetivo of ['bajar', 'masa']) {
-    for (const dieta of ['omnivora', 'vegetariana']) {
+    for (const dieta of ['omnivora', 'vegetariana', 'vegana']) {
       const plan = buildDietPlan({ ...parseOrder({ ...combo, objetivo, dieta }).order });
       const fromMacros = plan.macros.protein * 4 + plan.macros.carbs * 4 + plan.macros.fat * 9;
       assert.ok(Math.abs(fromMacros - plan.kcal) < 60, `${objetivo}/${dieta}: ${fromMacros} vs ${plan.kcal}`);
@@ -142,4 +142,27 @@ test('webhook ignora pagos no aprobados y firmas inválidas', async () => {
   res = mockRes();
   await webhook({ method: 'POST', query: { 'data.id': '1', type: 'payment' }, headers: { 'x-signature': 'ts=1,v1=00' }, body: {} }, res);
   assert.equal(res.statusCode, 401);
+});
+
+test('dieta: vegana, sin TACC, sin lactosa y alergias', async () => {
+  const foods = (plan) => plan.meals.flatMap((m) => m.options.flatMap((o) => o.items.map((i) => i.food)));
+  const { order } = parseOrder({ ...combo, dieta: 'vegana', celiaco: 'si', lactosa: 'si', alergias: 'maní' });
+  assert.equal(order.celiaco, true);
+  assert.equal(parseOrder({ ...combo }).order.celiaco, false);
+  const plan = buildDietPlan(order);
+  const all = foods(plan).join(' | ');
+  for (const bad of ['Pollo', 'Huevo', 'Yogur', 'Queso', 'Pan integral', 'Fideos (cocidos)', 'Avena —']) assert.ok(!all.includes(bad), bad);
+  assert.match(all, /Pan sin TACC/);
+  assert.deepEqual(plan.restrictions, ['Vegana', 'Sin TACC', 'Sin lactosa']);
+  for (const meal of plan.meals) for (const opt of meal.options) {
+    assert.ok(Math.abs(opt.kcal - meal.kcal) / meal.kcal < 0.3, `${meal.name}: ${opt.kcal} vs ${meal.kcal}`);
+  }
+  const lactose = foods(buildDietPlan(parseOrder({ ...combo, lactosa: 'si' }).order)).join(' | ');
+  assert.match(lactose, /deslactosad/);
+  assert.ok(!lactose.includes('Yogur descremado'));
+
+  const { planEmail, coachSaleEmail } = await import('../lib/email.js');
+  const mail = planEmail(order, products.combo, { training: buildTrainingPlan(order), diet: plan });
+  assert.match(mail.html, /Alergias informadas: maní/);
+  assert.match(coachSaleEmail(order, products.combo, { id: 1, amount: 1 }).html, /informó alergias: maní/);
 });

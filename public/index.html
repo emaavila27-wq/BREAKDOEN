@@ -106,7 +106,7 @@
       <details><summary>¿Sirve si soy principiante?</summary><p>Sí. En el cuestionario elegís tu nivel y el plan ajusta volumen, ejercicios e intensidad.</p></details>
       <details><summary>¿Puedo entrenar en casa?</summary><p>Sí, elegí "En casa" y la rutina usa peso corporal, mochila, bandas y una barra de puerta si tenés.</p></details>
       <details><summary>¿Tienen rutinas de calistenia?</summary><p>Sí. Elegí "Calistenia" y entrenás con barra y paralelas en cualquier plaza. Cada ejercicio se adapta a tu nivel: de dominadas negativas y flexiones inclinadas hasta dominadas arqueras, L-sit y pistol squat.</p></details>
-      <details><summary>¿La dieta es vegetariana?</summary><p>Podés elegir alimentación omnívora o vegetariana. Si tenés alergias o patologías, mejor la asesoría 1 a 1.</p></details>
+      <details><summary>¿Hay dieta vegetariana, vegana o sin TACC?</summary><p>Sí. Elegís alimentación omnívora, vegetariana o vegana, y podés marcar si sos celíaco/a o intolerante a la lactosa: el menú se arma con alimentos aptos. Si tenés alergias, indicalas en el formulario y las tenemos en cuenta; si son severas o tenés alguna patología, te recomiendo la asesoría 1 a 1.</p></details>
       <details><summary>¿Qué diferencia hay con la asesoría?</summary><p>Los planes se generan con tus datos y te llegan al instante. En la asesoría trabajo con vos en persona: evaluación por videollamada, plan 100% a medida y ajustes cada 2 semanas.</p></details>
       <details><summary>¿Reemplaza a un médico o nutricionista?</summary><p>No. Son planes orientativos para personas sanas. Si tenés alguna condición médica, consultá con un profesional antes de empezar.</p></details>
     </div>
@@ -227,8 +227,15 @@
         <select name="dieta">
           <option value="omnivora">Como de todo</option>
           <option value="vegetariana">Vegetariana</option>
+          <option value="vegana">Vegana</option>
         </select>
       </label>
+      <div class="checks">
+        <span class="checks-title">Restricciones (marcá las que correspondan)</span>
+        <label class="check"><input type="checkbox" name="celiaco" value="si" data-optional> Celíaco/a (sin TACC)</label>
+        <label class="check"><input type="checkbox" name="lactosa" value="si" data-optional> Intolerante a la lactosa</label>
+      </div>
+      <label>Alergias alimentarias (si tenés)<input name="alergias" maxlength="200" placeholder="Ej: maní, frutos secos, mariscos" data-optional></label>
     </fieldset>
 
     <label>Algo que deba saber (lesiones, horarios, gustos)<textarea name="notas" rows="2" maxlength="500"></textarea></label>

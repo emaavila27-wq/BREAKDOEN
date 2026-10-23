@@ -58,7 +58,7 @@
     buyForm.querySelectorAll('[data-for]').forEach((el) => {
       const visible = !!show[el.dataset.for];
       el.hidden = !visible;
-      el.querySelectorAll('input, select').forEach((f) => { f.required = visible; });
+      el.querySelectorAll('input, select').forEach((f) => { f.required = visible && !f.hasAttribute('data-optional'); });
     });
     setMsg(buyForm, '');
     dialog.showModal();
@@ -74,7 +74,7 @@
   buyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!buyForm.checkValidity()) {
-      const bad = buyForm.querySelector(':invalid');
+      const bad = buyForm.querySelector('input:invalid, select:invalid, textarea:invalid');
       setMsg(buyForm, `Revisá el campo "${bad.closest('label')?.firstChild.textContent.trim() || 'marcado'}".`, 'error');
       bad.focus();
       return;
