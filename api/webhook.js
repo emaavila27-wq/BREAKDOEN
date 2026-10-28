@@ -1,4 +1,4 @@
-import { products } from '../lib/config.js';
+import { products, priceFor } from '../lib/config.js';
 import { parseOrder } from '../lib/order.js';
 import { getPayment, validSignature } from '../lib/mercadopago.js';
 import { buildTrainingPlan, buildDietPlan } from '../lib/plans.js';
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     const { order, errors } = parseOrder(payment.metadata ?? {});
     if (errors) throw new Error(`Pago ${dataId} con metadata inválida: ${errors.join(' ')}`);
     const product = products[order.producto];
-    if (Number(payment.transaction_amount) < product.price) throw new Error(`Pago ${dataId} con monto menor al precio`);
+    if (Number(payment.transaction_amount) < priceFor(product, order)) throw new Error(`Pago ${dataId} con monto menor al precio`);
 
     const mail = product.consult
       ? consultEmail(order, product)

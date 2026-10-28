@@ -37,10 +37,10 @@
       <article class="card plan${p.featured ? ' featured' : ''}">
         <span class="plan-tag">${p.tag}</span>
         <h3>${p.title}</h3>
-        <div class="plan-price">${money(p.price, currency)}${p.consult ? ' <small>/ mes</small>' : ''}</div>
+        <div class="plan-price">${money(p.price, currency)}${p.per ? `<small>por ${p.per}</small>` : ''}</div>
         <p>${p.blurb}</p>
         <ul>${p.features.map((f) => `<li>${f}</li>`).join('')}</ul>
-        <button class="btn btn-block" data-buy="${p.id}">${p.consult ? 'Quiero la asesoría' : 'Comprar'}</button>
+        <button class="btn btn-block" data-buy="${p.id}">${p.presencial ? 'Reservar clase' : p.consult ? 'Quiero la asesoría' : 'Comprar'}</button>
       </article>`).join('');
   }
 
@@ -54,12 +54,26 @@
     $('#buy-tag').textContent = p.tag;
     $('#buy-title').textContent = p.title;
     $('#buy-price').textContent = money(p.price, catalog.currency);
-    const show = { training: p.needsTraining, diet: p.needsDiet, consult: p.consult };
+    const show = { training: p.needsTraining, diet: p.needsDiet, consult: p.consult, presencial: p.presencial };
     buyForm.querySelectorAll('[data-for]').forEach((el) => {
       const visible = !!show[el.dataset.for];
       el.hidden = !visible;
       el.querySelectorAll('input, select').forEach((f) => { f.required = visible && !f.hasAttribute('data-optional'); });
     });
+    buyForm.email.closest('label').firstChild.textContent = p.consult ? 'Email' : 'Email (ahí te llega el plan)';
+    // Clase presencial: frecuencia y total cotizado al instante.
+    const freq = $('#frecuencia');
+    if (p.packs) {
+      freq.innerHTML = p.packs.map((pk) => `<option value="${pk.id}">${pk.label}</option>`).join('');
+      const update = () => {
+        const pk = p.packs.find((x) => x.id === freq.value);
+        const off = pk.descuento ? ` · ${Math.round(pk.descuento * 100)}% off` : '';
+        $('#buy-price').textContent = money(pk.total, catalog.currency) + (pk.clases > 1 ? ' / mes' : '');
+        $('#quote').textContent = pk.clases === 1 ? '1 clase presencial' : `${pk.clases} clases al mes (${money(pk.total / pk.clases, catalog.currency)} c/u${off})`;
+      };
+      freq.onchange = update;
+      update();
+    }
     setMsg(buyForm, '');
     dialog.showModal();
   }

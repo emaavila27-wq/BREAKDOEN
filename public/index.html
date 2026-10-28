@@ -123,7 +123,7 @@
   <section id="planes" class="section section-dark">
     <h2 class="title">Elegí tu <span>arma</span></h2>
     <p class="lead">Completás un cuestionario corto, pagás con Mercado Pago y tu plan llega a tu mail.</p>
-    <div class="grid grid-4" id="plans"></div>
+    <div class="grid grid-5" id="plans"></div>
     <p class="note">Precios en pesos argentinos. Tarjeta de crédito, débito, dinero en cuenta o efectivo.</p>
   </section>
 
@@ -144,6 +144,7 @@
       <details><summary>¿Puedo entrenar en casa?</summary><p>Sí, elegí "En casa" y la rutina usa peso corporal, mochila, bandas y una barra de puerta si tenés.</p></details>
       <details><summary>¿Tienen rutinas de calistenia?</summary><p>Sí. Elegí "Calistenia" y entrenás con barra y paralelas en cualquier plaza. Cada ejercicio se adapta a tu nivel: de dominadas negativas y flexiones inclinadas hasta dominadas arqueras, L-sit y pistol squat.</p></details>
       <details><summary>¿Hay dieta vegetariana, vegana o sin TACC?</summary><p>Sí. Elegís alimentación omnívora, vegetariana o vegana, y podés marcar si sos celíaco/a o intolerante a la lactosa: el menú se arma con alimentos aptos. Si tenés alergias, indicalas en el formulario y las tenemos en cuenta; si son severas o tenés alguna patología, te recomiendo la asesoría 1 a 1.</p></details>
+      <details><summary>¿Cómo son las clases presenciales?</summary><p>Son clases personalizadas, solo vos y yo, en la disciplina que elijas: calistenia, musculación, funcional, powerlifting o movilidad. Pagás la clase online y te escribo por WhatsApp para coordinar día, horario y lugar en Belgrano, CABA.</p></details>
       <details><summary>¿Qué diferencia hay con la asesoría?</summary><p>Los planes se generan con tus datos y te llegan al instante. En la asesoría trabajo con vos en persona: evaluación por videollamada, plan 100% a medida y ajustes cada 2 semanas.</p></details>
       <details><summary>¿Reemplaza a un médico o nutricionista?</summary><p>No. Son planes orientativos para personas sanas. Si tenés alguna condición médica, consultá con un profesional antes de empezar.</p></details>
     </div>
@@ -206,6 +207,25 @@
           <option value="masa">Aumentar masa muscular</option>
         </select>
       </label>
+    </fieldset>
+
+    <fieldset data-for="presencial">
+      <legend>Clase presencial</legend>
+      <label>¿Qué querés entrenar?
+        <select name="disciplina">
+          <option value="">Elegí…</option>
+          <option value="calistenia">Calistenia</option>
+          <option value="musculacion">Musculación / gym</option>
+          <option value="funcional">Funcional</option>
+          <option value="powerlifting">Powerlifting</option>
+          <option value="movilidad">Movilidad y flexibilidad</option>
+          <option value="otra">Otra (contame en las notas)</option>
+        </select>
+      </label>
+      <label>¿Cuántas veces por semana?
+        <select name="frecuencia" id="frecuencia"></select>
+      </label>
+      <p class="quote" id="quote"></p>
     </fieldset>
 
     <fieldset data-for="training">

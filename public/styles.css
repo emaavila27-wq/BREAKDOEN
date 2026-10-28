@@ -164,6 +164,7 @@ body::before {
 .grid { display: grid; gap: 20px; }
 .grid-4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .grid-5 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.quote { margin: 0; font: 800 13px var(--heavy); letter-spacing: .08em; color: var(--red-hot); }
 
 .card {
   position: relative;
@@ -211,9 +212,9 @@ body::before {
   color: var(--red-hot);
   font: 800 11px var(--heavy); letter-spacing: .3em;
 }
-.plan h3 { margin: 0; }
-.plan-price { font: 900 40px/1 var(--heavy); color: #fff; }
-.plan-price small { font: 600 14px var(--body); color: var(--muted); }
+.plan h3 { margin: 0; font-size: 17px; letter-spacing: .03em; overflow-wrap: anywhere; }
+.plan-price { font: 900 34px/1 var(--heavy); color: #fff; }
+.plan-price small { display: block; margin-top: 6px; font: 600 14px var(--body); color: var(--muted); }
 .plan ul { margin: 0; padding: 0; list-style: none; flex: 1; }
 .plan li { padding: 7px 0 7px 24px; position: relative; color: #d0cbc3; font-size: 15px; border-bottom: 1px solid var(--line); }
 .plan li::before { content: '†'; position: absolute; left: 4px; top: 5px; color: var(--red); font: 700 18px var(--gothic); }

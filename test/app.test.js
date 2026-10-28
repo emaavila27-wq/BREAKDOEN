@@ -166,3 +166,37 @@ test('dieta: vegana, sin TACC, sin lactosa y alergias', async () => {
   assert.match(mail.html, /Alergias informadas: maní/);
   assert.match(coachSaleEmail(order, products.combo, { id: 1, amount: 1 }).html, /informó alergias: maní/);
 });
+
+test('clase presencial: cotiza según la frecuencia y avisa al coach', async () => {
+  const base = { producto: 'presencial', nombre: 'Juan Pérez', email: 'juan@example.com', whatsapp: '11 2233 4455', objetivo: 'masa', disciplina: 'calistenia' };
+  assert.ok(parseOrder({ ...base }).errors[0].includes('veces por semana'));
+  assert.ok(parseOrder({ ...base, frecuencia: 'x2', disciplina: 'yoga' }).errors);
+  assert.ok(parseOrder({ ...base, frecuencia: 'x2', whatsapp: '' }).errors[0].includes('la clase'));
+
+  const { order } = parseOrder({ ...base, frecuencia: 'x2' });
+  const { priceFor } = await import('../lib/config.js');
+  assert.equal(priceFor(products.presencial, { frecuencia: 'suelta' }), 25000);
+  assert.equal(priceFor(products.presencial, order), 200000);
+
+  fakeFetch();
+  const res = mockRes();
+  await checkout({ method: 'POST', headers: {}, body: { ...base, frecuencia: 'x2', price: 1 } }, res);
+  assert.equal(calls[0].body.items[0].unit_price, 200000);
+  assert.match(calls[0].body.items[0].title, /2 veces por semana/);
+
+  calls = [];
+  fakeFetch({ id: 7, status: 'approved', transaction_amount: 200000, metadata: order });
+  const res2 = mockRes();
+  await webhook({ method: 'POST', query: { 'data.id': '7', type: 'payment' }, headers: {}, body: {} }, res2);
+  const mails = calls.filter((c) => c.url.includes('resend'));
+  assert.equal(mails.length, 2);
+  assert.match(mails[0].body.html, /8 clases al mes/);
+  assert.match(mails[1].body.html, /clase presencial de Calistenia/);
+  assert.match(mails[1].body.html, /2 veces por semana/);
+
+  calls = [];
+  fakeFetch({ id: 8, status: 'approved', transaction_amount: 25000, metadata: order });
+  const res3 = mockRes();
+  await webhook({ method: 'POST', query: { 'data.id': '8', type: 'payment' }, headers: {}, body: {} }, res3);
+  assert.equal(res3.statusCode, 500); // pagó menos que el pack elegido
+});
