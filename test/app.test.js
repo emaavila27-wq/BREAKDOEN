@@ -200,3 +200,30 @@ test('clase presencial: cotiza según la frecuencia y avisa al coach', async () 
   await webhook({ method: 'POST', query: { 'data.id': '8', type: 'payment' }, headers: {}, body: {} }, res3);
   assert.equal(res3.statusCode, 500); // pagó menos que el pack elegido
 });
+
+test('oferta por tiempo limitado: precio, catálogo y pagos hechos antes del cierre', async () => {
+  const { priceFor, publicCatalog, promo } = await import('../lib/config.js');
+  if (!promo) return;
+  const before = new Date(new Date(promo.ends).getTime() - 60_000);
+  const after = new Date(new Date(promo.ends).getTime() + 60_000);
+  const [id, promoPrice] = Object.entries(promo.prices)[0];
+  assert.equal(priceFor(products[id], {}, before), promoPrice);
+  assert.equal(priceFor(products[id], {}, after), products[id].price);
+  assert.equal(priceFor(products.combo, {}, before), products.combo.price); // los demás no cambian
+
+  const cat = publicCatalog(before).products.find((p) => p.id === id);
+  assert.deepEqual([cat.price, cat.regularPrice], [promoPrice, products[id].price]);
+  assert.equal(publicCatalog(after).promo, null);
+
+  // Un pago creado durante la oferta se acepta aunque el aviso llegue después del cierre.
+  const { order } = parseOrder({ ...combo, producto: id, whatsapp: '11 2233 4455' });
+  fakeFetch({ id: 5, status: 'approved', transaction_amount: promoPrice, date_created: before.toISOString(), metadata: order });
+  const ok = mockRes();
+  await webhook({ method: 'POST', query: { 'data.id': '5', type: 'payment' }, headers: {}, body: {} }, ok);
+  assert.equal(ok.statusCode, 200);
+  // Pero un pago a precio de oferta creado después del cierre no.
+  fakeFetch({ id: 6, status: 'approved', transaction_amount: promoPrice, date_created: after.toISOString(), metadata: order });
+  const bad = mockRes();
+  await webhook({ method: 'POST', query: { 'data.id': '6', type: 'payment' }, headers: {}, body: {} }, bad);
+  assert.equal(bad.statusCode, 500);
+});

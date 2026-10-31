@@ -34,14 +34,42 @@
     $('#ig-link').href = brand.instagram;
 
     $('#plans').innerHTML = products.map((p) => `
-      <article class="card plan${p.featured ? ' featured' : ''}">
-        <span class="plan-tag">${p.tag}</span>
+      <article class="card plan${p.featured ? ' featured' : ''}${p.regularPrice ? ' promo' : ''}">
+        <span class="plan-tag">${p.regularPrice ? `${catalog.promo.emoji} OFERTA ${catalog.promo.name.toUpperCase()}` : p.tag}</span>
         <h3>${p.title}</h3>
+        ${p.regularPrice ? `<s class="plan-old">${money(p.regularPrice, currency)}</s>` : ''}
         <div class="plan-price">${money(p.price, currency)}${p.per ? `<small>por ${p.per}</small>` : ''}</div>
         <p>${p.blurb}</p>
         <ul>${p.features.map((f) => `<li>${f}</li>`).join('')}</ul>
         <button class="btn btn-block" data-buy="${p.id}">${p.presencial ? 'Reservar clase' : p.consult ? 'Quiero la asesoría' : 'Comprar'}</button>
       </article>`).join('');
+  }
+
+  // ---------- Oferta con cuenta regresiva ----------
+  function startPromo() {
+    const { promo } = catalog;
+    if (!promo) return;
+    const bar = $('#promo');
+    const ends = new Date(promo.ends).getTime();
+    $('#promo-text').textContent = `${promo.emoji} Oferta ${promo.name}: ${promo.text}`;
+    bar.hidden = false;
+    const pad = (n) => String(n).padStart(2, '0');
+    const tick = () => {
+      const left = ends - Date.now();
+      if (left <= 0) {
+        // Terminó: se oculta el banner y vuelven los precios normales.
+        clearInterval(timer);
+        bar.hidden = true;
+        catalog.products.forEach((p) => { if (p.regularPrice) { p.price = p.regularPrice; p.regularPrice = null; } });
+        catalog.promo = null;
+        renderPlans();
+        return;
+      }
+      const s = Math.floor(left / 1000);
+      $('#promo-timer').textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+    };
+    const timer = setInterval(tick, 1000);
+    tick();
   }
 
   // ---------- Compra ----------
@@ -128,6 +156,6 @@
 
   // ---------- Inicio ----------
   (window.__CATALOG__ ? Promise.resolve(window.__CATALOG__) : fetch('/api/catalog').then((r) => r.json()))
-    .then((data) => { catalog = data; renderPlans(); })
+    .then((data) => { catalog = data; renderPlans(); startPromo(); })
     .catch(() => { $('#plans').innerHTML = '<p class="lead">No pudimos cargar los planes. Recargá la página o escribime por WhatsApp.</p>'; });
 })();

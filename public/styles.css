@@ -64,6 +64,21 @@ body::before {
 .btn-block { display: block; width: 100%; }
 .btn[disabled] { opacity: .6; cursor: progress; }
 
+/* ---------- Oferta ---------- */
+.promo-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 18px;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, #ff6a00, #c4161c 55%, #6b0d10);
+  color: #fff; text-align: center;
+  font: 800 13px var(--heavy); letter-spacing: .12em; text-transform: uppercase;
+}
+.promo-bar[hidden] { display: none; }
+.promo-timer b { font-variant-numeric: tabular-nums; background: #000; padding: 3px 8px; margin-left: 4px; letter-spacing: .08em; }
+.promo-bar .btn { background: #000; clip-path: none; padding: 8px 16px; }
+.plan.promo { border-color: #ff6a00; box-shadow: 0 0 0 1px #ff6a00, 0 0 40px rgba(255, 106, 0, .25); }
+.plan.promo .plan-tag { background: #ff6a00; border-color: #ff6a00; color: #000; }
+.plan-old { margin-bottom: -10px; font: 700 18px var(--heavy); color: var(--muted); }
+
 /* ---------- Nav ---------- */
 .nav {
   position: sticky; top: 0; z-index: 50;

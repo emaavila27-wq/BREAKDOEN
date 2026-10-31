@@ -26,7 +26,8 @@ export default async function handler(req, res) {
     const { order, errors } = parseOrder(payment.metadata ?? {});
     if (errors) throw new Error(`Pago ${dataId} con metadata inválida: ${errors.join(' ')}`);
     const product = products[order.producto];
-    if (Number(payment.transaction_amount) < priceFor(product, order)) throw new Error(`Pago ${dataId} con monto menor al precio`);
+    // Se compara con el precio al momento de crear el pago (una oferta puede haber vencido después).
+    if (Number(payment.transaction_amount) < priceFor(product, order, new Date(payment.date_created ?? Date.now()))) throw new Error(`Pago ${dataId} con monto menor al precio`);
 
     const mail = product.consult
       ? consultEmail(order, product)
