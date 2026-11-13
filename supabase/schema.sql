@@ -66,6 +66,11 @@ create table if not exists public.messages (
 );
 create index if not exists messages_session on public.messages (session_id, created_at);
 
+-- Acceso de la API a las tablas (los permisos finos los da Row Level Security, más abajo).
+-- Hace falta si en el proyecto se desactivó "Exponer automáticamente nuevas tablas".
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.profiles, public.routines, public.sessions, public.set_logs, public.messages to authenticated;
+
 -- ------------------------------------------------- Perfil al registrarse
 
 create or replace function public.handle_new_user() returns trigger
