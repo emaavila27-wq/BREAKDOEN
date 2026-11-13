@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#121212">
+<title>Panel del coach — BREAKDOWN</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/portal/portal.css">
+</head>
+<body class="portal wide">
+<header class="nav">
+  <a href="/" class="nav-logo"><img src="/logo-white.svg" alt="BREAKDOWN" width="74" height="48"></a>
+  <div class="nav-right" id="nav-user" hidden>
+    <button class="link-btn" data-go="feed">Entrenamientos <span class="badge" id="pending-badge" hidden></span></button>
+    <button class="link-btn" data-go="students">Alumnos</button>
+    <button class="link-btn" id="logout" style="color:var(--muted)">Salir</button>
+  </div>
+</header>
+
+<main>
+  <section class="view" id="v-config" hidden>
+    <div class="auth-box"><h1 class="p-title">Panel <span>sin configurar</span></h1><p class="p-sub">Falta conectar Supabase (portal/config.js).</p></div>
+  </section>
+
+  <section class="view" id="v-auth" hidden>
+    <div class="auth-box">
+      <img class="logo-big" src="/logo.svg" alt="BREAKDOWN">
+      <h1 class="p-title">Panel del <span>coach</span></h1>
+      <form class="form" id="f-auth" novalidate>
+        <label>Email<input name="email" type="email" required autocomplete="email"></label>
+        <label>Contraseña<input name="password" type="password" required autocomplete="current-password"></label>
+        <button class="btn btn-block" type="submit">Ingresar</button>
+        <p class="form-msg" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+  <section class="view" id="v-denied" hidden>
+    <div class="auth-box">
+      <h1 class="p-title">Acceso <span>restringido</span></h1>
+      <p class="p-sub">Este panel es solo para el coach.</p>
+      <a class="btn" href="/alumnos/">Ir a mi entrenamiento</a>
+    </div>
+  </section>
+
+  <!-- Feed de entrenamientos -->
+  <section class="view" id="v-feed" hidden>
+    <h1 class="p-title">Entrenamientos <span>de tus alumnos</span></h1>
+    <p class="p-sub">Calificá con estrellas y mandales correcciones. Les llegan en su portal.</p>
+    <div class="filters" id="filters">
+      <button class="chip on" data-filter="pending">Sin calificar</button>
+      <button class="chip" data-filter="all">Todos</button>
+      <select id="student-filter" class="chip" aria-label="Filtrar por alumno"><option value="">Todos los alumnos</option></select>
+    </div>
+    <div id="feed"></div>
+  </section>
+
+  <!-- Alumnos -->
+  <section class="view" id="v-students" hidden>
+    <h1 class="p-title">Mis <span>alumnos</span></h1>
+    <p class="p-sub">Los alumnos se registran en breakdownfit.com/alumnos. Acá les armás la rutina.</p>
+    <div class="students" id="students"></div>
+  </section>
+
+  <!-- Editor de rutina -->
+  <section class="view editor" id="v-editor" hidden>
+    <button class="link-btn" data-go="students">← Alumnos</button>
+    <h1 class="p-title" id="ed-title"></h1>
+    <div class="panel">
+      <label class="form" style="display:block">
+        <span style="font:700 11px var(--heavy);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">Nombre de la rutina</span>
+        <input id="ed-name" placeholder="Ej: Front & Planche — bloque 1">
+      </label>
+      <div class="filters" style="margin:12px 0 0">
+        <button type="button" class="add" id="ed-sample">Cargar ejemplo (Front / Planche)</button>
+        <select id="ed-copy" class="add" aria-label="Copiar rutina de otro alumno"><option value="">Copiar rutina de otro alumno…</option></select>
+      </div>
+      <p class="hint" style="margin-top:12px">Etiquetas: escribí <b>roja</b>, <b>amarilla</b>, <b>banda</b>, <b>espalda</b> (banda en la espalda), <b>pies</b> (pies elevados) o lastre como <b>+5 kg</b>, separadas por coma.</p>
+    </div>
+    <div id="ed-days"></div>
+    <button type="button" class="add" id="ed-add-day">+ Agregar día</button>
+    <div style="margin-top:24px"><button class="btn" id="ed-save">Guardar rutina</button></div>
+  </section>
+</main>
+
+<script type="module" src="/coach/app.js"></script>
+</body>
+</html>

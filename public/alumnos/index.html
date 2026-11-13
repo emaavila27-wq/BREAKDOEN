@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#121212">
+<title>Mi entrenamiento — BREAKDOWN</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/portal/portal.css">
+</head>
+<body class="portal">
+<header class="nav">
+  <a href="/" class="nav-logo"><img src="/logo-white.svg" alt="BREAKDOWN" width="74" height="48"></a>
+  <div class="nav-right" id="nav-user" hidden>
+    <span class="who-am-i" id="who"></span>
+    <button class="link-btn" id="logout">Salir</button>
+  </div>
+</header>
+
+<main>
+  <!-- Portal todavía sin configurar -->
+  <section class="view" id="v-config" hidden>
+    <div class="auth-box">
+      <h1 class="p-title">Muy <span>pronto</span></h1>
+      <p class="p-sub">El portal de alumnos se está preparando. Mientras tanto, escribime por WhatsApp.</p>
+      <a class="btn" href="/#contacto">Contacto</a>
+    </div>
+  </section>
+
+  <!-- Login / registro -->
+  <section class="view" id="v-auth" hidden>
+    <div class="auth-box">
+      <img class="logo-big" src="/logo.svg" alt="BREAKDOWN">
+      <h1 class="p-title">Mi <span>entrenamiento</span></h1>
+      <p class="p-sub">Entrá con tu cuenta para ver tu rutina y entrenar.</p>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="on" data-tab="login">Ingresar</button>
+        <button type="button" data-tab="signup">Crear cuenta</button>
+      </div>
+      <form class="form" id="f-auth" novalidate>
+        <label data-only="signup" hidden>Nombre y apellido<input name="nombre" autocomplete="name"></label>
+        <label>Email<input name="email" type="email" required autocomplete="email"></label>
+        <label>Contraseña<input name="password" type="password" required minlength="6" autocomplete="current-password"></label>
+        <button class="btn btn-block" type="submit" id="auth-submit">Ingresar</button>
+        <button class="link-btn" type="button" id="forgot">Olvidé mi contraseña</button>
+        <p class="form-msg" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Nueva contraseña (link del mail de recuperación) -->
+  <section class="view" id="v-reset" hidden>
+    <div class="auth-box">
+      <h1 class="p-title">Nueva <span>contraseña</span></h1>
+      <form class="form" id="f-reset" novalidate>
+        <label>Contraseña nueva<input name="password" type="password" required minlength="6" autocomplete="new-password"></label>
+        <button class="btn btn-block" type="submit">Guardar</button>
+        <p class="form-msg" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Inicio del alumno -->
+  <section class="view" id="v-home" hidden>
+    <h1 class="p-title" id="hello"></h1>
+    <p class="p-sub" id="routine-title"></p>
+    <div id="resume"></div>
+    <div class="days" id="days"></div>
+    <h2 class="p-title" style="font-size:24px;margin-top:40px">Mis <span>entrenamientos</span></h2>
+    <p class="p-sub">Acá ves las estrellas y correcciones de tu coach.</p>
+    <div id="history"></div>
+  </section>
+
+  <!-- Entrenando -->
+  <section class="view" id="v-workout" hidden>
+    <div id="exercises"></div>
+  </section>
+
+  <!-- Terminar -->
+  <section class="view" id="v-finish" hidden>
+    <h1 class="p-title">¡Bien <span>ahí!</span></h1>
+    <p class="p-sub" id="finish-sum"></p>
+    <form class="form" id="f-finish">
+      <label>¿Cómo te sentiste? (sensaciones, molestias, qué costó más)
+        <textarea name="sensaciones" rows="6" maxlength="2000" placeholder="Ej: el L-Pull salió fácil, en el straddle me dolió un poco la muñeca…"></textarea>
+      </label>
+      <button class="btn btn-block" type="submit">Enviar a mi coach</button>
+      <button class="link-btn" type="button" id="back-to-workout">← Volver al entrenamiento</button>
+      <p class="form-msg" role="status"></p>
+    </form>
+  </section>
+</main>
+
+<!-- Barra fija durante el entrenamiento -->
+<div class="wk-head" id="wk-head" hidden>
+  <div class="grow"><div class="t" id="wk-title"></div><div class="clock" id="wk-clock">00:00</div></div>
+  <button class="link-btn" id="wk-exit">Salir</button>
+</div>
+<div class="finish-bar" id="finish-bar" hidden><button class="btn" id="go-finish">Terminar entrenamiento</button></div>
+
+<!-- Contador de descanso -->
+<div class="rest" id="rest" hidden aria-live="polite">
+  <div class="label" id="rest-label">Descanso</div>
+  <div class="ring">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="45" fill="none" stroke="#2e2e2e" stroke-width="6"/>
+      <circle id="rest-arc" cx="50" cy="50" r="45" fill="none" stroke="#c4161c" stroke-width="6" stroke-linecap="butt" stroke-dasharray="282.74" stroke-dashoffset="0"/>
+    </svg>
+    <div class="time" id="rest-time">1:30</div>
+  </div>
+  <div class="next" id="rest-next"></div>
+  <div class="row">
+    <button class="icon-btn" id="rest-minus">−15 s</button>
+    <button class="icon-btn" id="rest-plus">+15 s</button>
+    <button class="icon-btn ok" id="rest-skip">Seguir</button>
+  </div>
+</div>
+
+<input type="file" id="video-input" accept="video/*" hidden>
+<script type="module" src="/alumnos/app.js"></script>
+</body>
+</html>
