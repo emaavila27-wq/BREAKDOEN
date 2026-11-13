@@ -2,9 +2,9 @@
 -- Se corre una sola vez en Supabase → SQL Editor → New query → pegar todo → Run.
 -- Es seguro volver a correrlo: no borra datos.
 
--- ⚠️ Mail del coach: la cuenta que se registre con este mail entra al panel /coach.
-create or replace function public.coach_email() returns text
-language sql immutable as $$ select 'emanuelnoguera750@gmail.com' $$;
+-- Coach: se registra en /alumnos como cualquiera y después se lo promueve a mano
+-- (así nadie puede registrarse con el mail del coach y entrar al panel):
+--   update public.profiles set role = 'coach' where email = 'mail-del-coach@ejemplo.com';
 
 -- ---------------------------------------------------------------- Tablas
 
@@ -81,7 +81,7 @@ begin
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'nombre', ''),
-    case when lower(new.email) = lower(public.coach_email()) then 'coach' else 'alumno' end
+    'alumno'
   )
   on conflict (id) do nothing;
   return new;

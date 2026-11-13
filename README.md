@@ -90,11 +90,11 @@ npx vercel dev         # levanta el sitio local con las funciones
 ### Configurar Supabase (una sola vez)
 1. Creá un proyecto en [supabase.com](https://supabase.com) (región São Paulo).
 2. **SQL Editor → New query**: pegá todo `supabase/schema.sql` y tocá **Run**.
-   El mail del coach está en la función `coach_email()` al principio del archivo.
 3. **Authentication → URL Configuration**: Site URL `https://www.breakdownfit.com` y en
    Redirect URLs agregá `https://www.breakdownfit.com/alumnos/`.
 4. **Settings → API**: copiá la **Project URL** y la **anon public key** en
    `public/portal/config.js` (son públicas; los permisos los protege la base).
-5. El coach se registra en `/alumnos` con su mail y queda con acceso a `/coach`.
+5. El coach se registra en `/alumnos` y se lo promueve en el SQL Editor:
+   `update public.profiles set role = 'coach' where email = 'MAIL-DEL-COACH';`
 
 Videos: hasta 50 MB por video (plan gratis: 1 GB en total).
