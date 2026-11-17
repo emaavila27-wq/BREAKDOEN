@@ -1,7 +1,9 @@
 import * as db from '/portal/db.js';
 import { $, $$, esc, tagHtml, starsHtml, when, duration, toast, groupSets, threadHtml } from '/portal/ui.js';
+import { compressVideo } from '/portal/compress.js';
 
 const DEFAULT_REST = 90;
+const COMPRESS_OVER = 20 * 1024 * 1024; // los videos más pesados se achican antes de subir
 const SAVED = 'bd-workout'; // entrenamiento en curso (por si se cierra la pestaña)
 
 let me = null;       // usuario de Supabase
@@ -402,16 +404,36 @@ $('#video-input').addEventListener('change', async (e) => {
   btn.textContent = 'Subiendo…';
   try {
     const log = await ensureLog(i, n);
-    const path = await db.uploadVideo(me.id, wk.sessionId, log.id, file);
+    let upload = file;
+    if (file.size > COMPRESS_OVER) {
+      busy(`Achicando el video (${Math.round(file.size / 1048576)} MB)…`, 'No cierres ni bloquees la pantalla: tarda lo mismo que dura el video.', 0);
+      upload = await compressVideo(file, (p) => busy(null, null, p));
+    }
+    busy('Subiendo el video…', `${Math.max(1, Math.round(upload.size / 1048576))} MB`, null);
+    const path = await db.uploadVideo(me.id, wk.sessionId, log.id, upload);
     await db.updateSet(log.id, { video_path: path });
     log.video_path = path;
     persist();
     toast('Video subido', 'ok');
   } catch (err) {
     toast(err.message, 'error');
+  } finally {
+    busy(false);
   }
   renderExercises();
 });
+
+// Pantalla de espera mientras se achica o sube un video (progress null = sin porcentaje).
+function busy(title, text, progress) {
+  const el = $('#busy');
+  if (title === false) { el.hidden = true; return; }
+  el.hidden = false;
+  if (title) $('#busy-title').textContent = title;
+  if (text) $('#busy-text').textContent = text;
+  const bar = $('#busy-bar');
+  bar.classList.toggle('indeterminate', progress === null);
+  if (typeof progress === 'number') bar.style.width = `${Math.round(progress * 100)}%`;
+}
 
 // --------------------------------------------------- Contador de descanso
 const rest = { end: 0, total: 0, timer: null };
