@@ -67,9 +67,12 @@ create table if not exists public.messages (
   session_id uuid not null references public.sessions on delete cascade,
   author_id uuid not null references public.profiles on delete cascade,
   body text not null check (length(body) between 1 and 2000),
+  exercise text,   -- "bloque|ejercicio" al que corresponde la corrección (null = comentario general)
   created_at timestamptz not null default now()
 );
 create index if not exists messages_session on public.messages (session_id, created_at);
+-- Para bases creadas antes de las correcciones por ejercicio:
+alter table public.messages add column if not exists exercise text;
 
 -- Acceso de la API a las tablas (los permisos finos los da Row Level Security, más abajo).
 -- Hace falta si en el proyecto se desactivó "Exponer automáticamente nuevas tablas".

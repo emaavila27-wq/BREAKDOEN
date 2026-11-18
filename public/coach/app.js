@@ -1,5 +1,5 @@
 import * as db from '/portal/db.js';
-import { $, $$, esc, when, duration, toast, groupSets, threadHtml, initials, TAGS, videosHtml, needsReview } from '/portal/ui.js';
+import { $, $$, esc, when, duration, toast, groupSets, initials, TAGS, videosHtml, needsReview, exKey, exerciseFeedbackHtml, generalMessagesHtml } from '/portal/ui.js';
 import { SAMPLE_ROUTINE } from '/portal/sample-routine.js';
 
 let me = null;
@@ -90,18 +90,15 @@ function cardHtml(s) {
         </div>
       </div>
       <div class="sess-body">
+        ${s.sensaciones ? `<div class="feel"><b>Sensaciones</b>${esc(s.sensaciones)}</div>` : ''}
         ${s.sets.length ? groupSets(s.sets).map((g) => `
           <div class="ex-sum">
             <div class="name">${esc(g.exercise)} <span class="m" style="font-weight:400;color:var(--muted)">· ${esc(g.block)}</span></div>
             <div class="reps">${g.sets.map((x) => `S${x.set_number}: ${esc(x.reps || '✓')}`).join(' · ')}</div>
             ${videosHtml(g.sets, { interactive: true })}
+            ${exerciseFeedbackHtml(s, exKey(g), me.id, nameOf, `Corrección para ${g.exercise}…`)}
           </div>`).join('') : '<div class="m" style="color:var(--muted)">No marcó series.</div>'}
-        ${s.sensaciones ? `<div class="feel"><b>Sensaciones</b>${esc(s.sensaciones)}</div>` : ''}
-        ${threadHtml(s.messages, me.id, nameOf)}
-        <form class="reply" data-reply="${s.id}">
-          <textarea name="body" rows="2" maxlength="2000" placeholder="Escribí una corrección…"></textarea>
-          <button class="icon-btn ok" type="submit">Enviar</button>
-        </form>
+        ${generalMessagesHtml(s, me.id, nameOf)}
       </div>
     </article>`;
 }
@@ -144,7 +141,7 @@ function wireCards() {
     const btn = $('button', form);
     btn.disabled = true;
     try {
-      const msg = await db.sendMessage(form.dataset.reply, me.id, body);
+      const msg = await db.sendMessage(form.dataset.reply, me.id, body, form.dataset.ex || null);
       sessions.find((x) => x.id === form.dataset.reply).messages.push(msg);
       touched.add(form.dataset.reply);
       db.markReviewed(form.dataset.reply).catch(() => {});

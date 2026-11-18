@@ -1,5 +1,5 @@
 import * as db from '/portal/db.js';
-import { $, $$, esc, tagHtml, starsHtml, when, duration, toast, groupSets, threadHtml, videosHtml } from '/portal/ui.js';
+import { $, $$, esc, tagHtml, starsHtml, when, duration, toast, groupSets, videosHtml, exKey, exerciseFeedbackHtml, generalMessagesHtml } from '/portal/ui.js';
 import { compressVideo } from '/portal/compress.js';
 
 const DEFAULT_REST = 90;
@@ -180,18 +180,15 @@ function sessionHtml(s) {
         ${ratingSummary(s)}
       </div>
       <div class="sess-body">
+        ${s.sensaciones ? `<div class="feel"><b>Mis sensaciones</b>${esc(s.sensaciones)}</div>` : ''}
         ${groupSets(s.sets).map((g) => `
           <div class="ex-sum">
             <div class="name">${esc(g.exercise)}</div>
             <div class="reps">${g.sets.map((x) => `S${x.set_number}: ${esc(x.reps || '✓')}`).join(' · ')}</div>
             ${videosHtml(g.sets)}
+            ${exerciseFeedbackHtml(s, exKey(g), me.id, names, 'Preguntale a tu coach sobre este ejercicio…')}
           </div>`).join('')}
-        ${s.sensaciones ? `<div class="feel"><b>Mis sensaciones</b>${esc(s.sensaciones)}</div>` : ''}
-        ${threadHtml(s.messages, me.id, names)}
-        <form class="reply" data-reply="${s.id}">
-          <textarea name="body" rows="1" maxlength="2000" placeholder="Responderle a tu coach…"></textarea>
-          <button class="icon-btn ok" type="submit">Enviar</button>
-        </form>
+        ${generalMessagesHtml(s, me.id, names)}
       </div>
     </article>`;
 }
@@ -226,7 +223,7 @@ function wireSessions(root, sessions) {
     const body = form.body.value.trim();
     if (!body) return;
     try {
-      await db.sendMessage(form.dataset.reply, me.id, body);
+      await db.sendMessage(form.dataset.reply, me.id, body, form.dataset.ex || null);
       toast('Mensaje enviado', 'ok');
       renderHistory();
     } catch (err) { toast(err.message, 'error'); }

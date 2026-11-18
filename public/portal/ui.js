@@ -78,6 +78,24 @@ export function needsReview(s, coachIds = []) {
   return !s.reviewed_at && !s.messages.some((m) => coachIds.includes(m.author_id));
 }
 
+// Las correcciones van por ejercicio: cada mensaje guarda "bloque|ejercicio".
+export const exKey = (g) => `${g.block}|${g.exercise}`;
+
+export function exerciseFeedbackHtml(s, key, meId, names, placeholder) {
+  const msgs = s.messages.filter((m) => m.exercise === key);
+  return `<div class="ex-feedback">${threadHtml(msgs, meId, names)}
+    <form class="reply" data-reply="${esc(s.id)}" data-ex="${esc(key)}">
+      <textarea name="body" rows="1" maxlength="2000" placeholder="${esc(placeholder)}"></textarea>
+      <button class="icon-btn ok" type="submit">Enviar</button>
+    </form></div>`;
+}
+
+// Mensajes de antes de las correcciones por ejercicio (sin ejercicio asignado).
+export function generalMessagesHtml(s, meId, names) {
+  const msgs = s.messages.filter((m) => !m.exercise);
+  return msgs.length ? `<div class="ex-sum"><div class="name">Comentarios anteriores</div>${threadHtml(msgs, meId, names)}</div>` : '';
+}
+
 // Conversación de correcciones (burbujas tipo chat).
 export function threadHtml(messages, meId, names) {
   if (!messages.length) return '';

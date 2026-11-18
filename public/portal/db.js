@@ -128,8 +128,9 @@ export async function markReviewed(id) {
 export async function markSeen(id) {
   check(await sb.from('sessions').update({ student_seen_at: new Date().toISOString() }).eq('id', id));
 }
-export async function sendMessage(sessionId, authorId, body) {
-  return check(await sb.from('messages').insert({ session_id: sessionId, author_id: authorId, body }).select().single());
+// `exercise` = "bloque|ejercicio" de la corrección.
+export async function sendMessage(sessionId, authorId, body, exercise = null) {
+  return check(await sb.from('messages').insert({ session_id: sessionId, author_id: authorId, body, exercise }).select().single());
 }
 
 // ---------------------------------------------------------------- Videos
