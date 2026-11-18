@@ -99,6 +99,11 @@ body.training main { padding-top: 84px; }
 .ex-sum .reps { font-size: 14px; color: var(--muted); }
 .videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; }
 .videos video, .video-slot { width: 100%; aspect-ratio: 9 / 16; max-height: 300px; background: #000; object-fit: contain; }
+.video-card { display: grid; gap: 6px; justify-items: center; }
+.video-card video, .video-card .video-slot { width: 100%; }
+.video-rate .stars { font-size: 18px; }
+.video-rate .stars.interactive button { font-size: 24px; padding: 1px; }
+.pending-rate { font: 700 11px var(--heavy); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .video-slot { display: grid; place-items: center; border: 1px solid var(--line); color: var(--muted); font-size: 13px; cursor: pointer; }
 .feel { padding: 12px 14px; background: #0e0e0e; border-left: 3px solid var(--muted); white-space: pre-wrap; }
 .feel b { display: block; font: 800 10px var(--heavy); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }

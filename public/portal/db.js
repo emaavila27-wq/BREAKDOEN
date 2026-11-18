@@ -113,9 +113,16 @@ export async function listSessions({ studentId } = {}) {
   }));
 }
 
-export async function rateSession(id, rating) {
-  return check(await sb.from('sessions')
+// Estrellas del coach para el video de una serie.
+export async function rateSet(id, rating) {
+  return check(await sb.from('set_logs')
     .update({ rating, reviewed_at: new Date().toISOString() })
+    .eq('id', id).select().single());
+}
+// Marca el entrenamiento como revisado (para avisarle al alumno que hay novedades).
+export async function markReviewed(id) {
+  return check(await sb.from('sessions')
+    .update({ reviewed_at: new Date().toISOString() })
     .eq('id', id).select().single());
 }
 export async function markSeen(id) {

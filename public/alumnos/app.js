@@ -1,5 +1,5 @@
 import * as db from '/portal/db.js';
-import { $, $$, esc, tagHtml, starsHtml, when, duration, toast, groupSets, threadHtml } from '/portal/ui.js';
+import { $, $$, esc, tagHtml, starsHtml, when, duration, toast, groupSets, threadHtml, videosHtml } from '/portal/ui.js';
 import { compressVideo } from '/portal/compress.js';
 
 const DEFAULT_REST = 90;
@@ -177,7 +177,7 @@ function sessionHtml(s) {
           <div class="t">${esc(s.day_name)} · ${esc(s.day_focus)}</div>
           <div class="m">${when(s.finished_at)} · ${duration(s.started_at, s.finished_at)} · ${s.sets.length} series</div>
         </div>
-        ${s.rating ? starsHtml(s.rating) : '<span class="m">Sin calificar</span>'}
+        ${ratingSummary(s)}
       </div>
       <div class="sess-body">
         ${groupSets(s.sets).map((g) => `
@@ -196,10 +196,14 @@ function sessionHtml(s) {
     </article>`;
 }
 
-function videosHtml(sets) {
-  const withVideo = sets.filter((x) => x.video_path);
-  if (!withVideo.length) return '';
-  return `<div class="videos">${withVideo.map((x) => `<button type="button" class="video-slot" data-video="${esc(x.video_path)}">▶ Serie ${x.set_number}</button>`).join('')}</div>`;
+// Promedio de estrellas de los videos calificados (o el estado de revisión).
+function ratingSummary(s) {
+  const rated = s.sets.filter((x) => x.video_path && x.rating);
+  if (rated.length) {
+    const avg = rated.reduce((n, x) => n + x.rating, 0) / rated.length;
+    return `<span class="m" style="text-align:right">${starsHtml(Math.round(avg))}<br>${avg.toFixed(1).replace('.', ',')} promedio</span>`;
+  }
+  return `<span class="m">${s.sets.some((x) => x.video_path) ? 'Videos sin calificar' : ''}</span>`;
 }
 
 // Los videos se cargan recién cuando los tocan (link firmado temporal).

@@ -60,6 +60,24 @@ export function groupSets(sets) {
   return groups;
 }
 
+// Videos de un ejercicio, cada uno con sus estrellas (el coach las puede tocar).
+export function videosHtml(sets, { interactive = false } = {}) {
+  const withVideo = sets.filter((x) => x.video_path);
+  if (!withVideo.length) return '';
+  return `<div class="videos">${withVideo.map((x) => `
+    <div class="video-card" data-set="${esc(x.id)}">
+      <button type="button" class="video-slot" data-video="${esc(x.video_path)}">▶ Serie ${x.set_number}</button>
+      <div class="video-rate">${x.rating || interactive ? starsHtml(x.rating, { interactive }) : '<span class="pending-rate">Sin calificar</span>'}</div>
+    </div>`).join('')}</div>`;
+}
+
+// ¿El entrenamiento tiene algo que el coach no revisó? (videos sin estrellas, o sin respuesta si no hay videos)
+export function needsReview(s, coachIds = []) {
+  const videos = s.sets.filter((x) => x.video_path);
+  if (videos.length) return videos.some((x) => !x.rating);
+  return !s.reviewed_at && !s.messages.some((m) => coachIds.includes(m.author_id));
+}
+
 // Conversación de correcciones (burbujas tipo chat).
 export function threadHtml(messages, meId, names) {
   if (!messages.length) return '';

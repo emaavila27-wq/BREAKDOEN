@@ -52,9 +52,14 @@ create table if not exists public.set_logs (
   set_number int not null,
   reps text not null default '',
   video_path text,
+  rating int check (rating between 1 and 5),   -- estrellas del coach para el video de esta serie
+  reviewed_at timestamptz,
   created_at timestamptz not null default now()
 );
 create index if not exists set_logs_session on public.set_logs (session_id, created_at);
+-- Para bases creadas antes de la calificación por video:
+alter table public.set_logs add column if not exists rating int check (rating between 1 and 5);
+alter table public.set_logs add column if not exists reviewed_at timestamptz;
 
 -- Chat de correcciones de cada entrenamiento (coach ↔ alumno).
 create table if not exists public.messages (
@@ -132,7 +137,7 @@ drop policy if exists "alumno borra sesiones sin terminar" on public.sessions;
 create policy "alumno borra sesiones sin terminar" on public.sessions for delete
   using (student_id = auth.uid() and finished_at is null);
 
--- El alumno no puede ponerse estrellas a sí mismo.
+-- El alumno no puede ponerse estrellas a sí mismo (ni al entrenamiento ni a sus videos).
 create or replace function public.protect_review() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
@@ -156,6 +161,12 @@ create policy "alumno carga series" on public.set_logs for insert
 drop policy if exists "alumno edita series" on public.set_logs;
 create policy "alumno edita series" on public.set_logs for update
   using (student_id = auth.uid());
+drop policy if exists "coach califica series" on public.set_logs;
+create policy "coach califica series" on public.set_logs for update
+  using (public.is_coach());
+drop trigger if exists set_logs_protect_review on public.set_logs;
+create trigger set_logs_protect_review before update on public.set_logs
+  for each row execute function public.protect_review();
 drop policy if exists "alumno borra series" on public.set_logs;
 create policy "alumno borra series" on public.set_logs for delete
   using (student_id = auth.uid());

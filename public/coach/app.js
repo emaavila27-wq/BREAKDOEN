@@ -1,5 +1,5 @@
 import * as db from '/portal/db.js';
-import { $, $$, esc, starsHtml, when, duration, toast, groupSets, threadHtml, initials, TAGS } from '/portal/ui.js';
+import { $, $$, esc, when, duration, toast, groupSets, threadHtml, initials, TAGS, videosHtml, needsReview } from '/portal/ui.js';
 import { SAMPLE_ROUTINE } from '/portal/sample-routine.js';
 
 let me = null;
@@ -47,11 +47,16 @@ $('#student-filter').addEventListener('change', (e) => { studentFilter = e.targe
 
 async function loadAll() {
   [students, routines, sessions] = await Promise.all([db.listStudents(), db.listRoutines(), db.listSessions()]);
-  const pending = sessions.filter((s) => !s.rating).length;
-  $('#pending-badge').hidden = !pending;
-  $('#pending-badge').textContent = pending;
+  updateBadge();
   $('#student-filter').innerHTML = '<option value="">Todos los alumnos</option>' +
     students.map((s) => `<option value="${s.id}"${s.id === studentFilter ? ' selected' : ''}>${esc(s.nombre || s.email)}</option>`).join('');
+}
+
+const pendingOf = (s) => needsReview(s, [me.id]);
+function updateBadge() {
+  const pending = sessions.filter(pendingOf).length;
+  $('#pending-badge').hidden = !pending;
+  $('#pending-badge').textContent = pending;
 }
 
 async function renderFeed() {
@@ -65,7 +70,7 @@ async function renderFeed() {
 
 function paintFeed() {
   const list = sessions
-    .filter((s) => filter === 'all' || !s.rating || touched.has(s.id))
+    .filter((s) => filter === 'all' || pendingOf(s) || touched.has(s.id))
     .filter((s) => !studentFilter || s.student_id === studentFilter);
   $('#feed').innerHTML = list.length ? list.map(cardHtml).join('')
     : `<div class="empty">${filter === 'pending' ? 'No hay entrenamientos sin calificar. 🤘' : 'Todavía no hay entrenamientos.'}</div>`;
@@ -76,7 +81,7 @@ function cardHtml(s) {
   const st = students.find((x) => x.id === s.student_id);
   const name = st?.nombre || st?.email || 'Alumno';
   return `
-    <article class="sess${s.rating ? '' : ' unread'}" data-id="${s.id}">
+    <article class="sess${pendingOf(s) ? ' unread' : ''}" data-id="${s.id}">
       <div class="sess-head">
         <div class="avatar">${esc(initials(name))}</div>
         <div class="grow">
@@ -89,13 +94,9 @@ function cardHtml(s) {
           <div class="ex-sum">
             <div class="name">${esc(g.exercise)} <span class="m" style="font-weight:400;color:var(--muted)">· ${esc(g.block)}</span></div>
             <div class="reps">${g.sets.map((x) => `S${x.set_number}: ${esc(x.reps || '✓')}`).join(' · ')}</div>
-            ${g.sets.some((x) => x.video_path) ? `<div class="videos">${g.sets.filter((x) => x.video_path).map((x) => `<button type="button" class="video-slot" data-video="${esc(x.video_path)}">▶ Serie ${x.set_number}</button>`).join('')}</div>` : ''}
+            ${videosHtml(g.sets, { interactive: true })}
           </div>`).join('') : '<div class="m" style="color:var(--muted)">No marcó series.</div>'}
         ${s.sensaciones ? `<div class="feel"><b>Sensaciones</b>${esc(s.sensaciones)}</div>` : ''}
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <span style="font:800 11px var(--heavy);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">Calificación</span>
-          ${starsHtml(s.rating, { interactive: true })}
-        </div>
         ${threadHtml(s.messages, me.id, nameOf)}
         <form class="reply" data-reply="${s.id}">
           <textarea name="body" rows="2" maxlength="2000" placeholder="Escribí una corrección…"></textarea>
@@ -116,21 +117,22 @@ function wireCards() {
     } catch (err) { slot.textContent = err.message; }
   }, { once: true }));
 
-  $$('.sess').forEach((card) => {
-    const id = card.dataset.id;
-    $$('[data-star]', card).forEach((b) => b.addEventListener('click', async () => {
+  // Estrellas de cada video
+  $$('.video-card').forEach((vc) => {
+    const card = vc.closest('.sess');
+    const sessionId = card.dataset.id;
+    $$('[data-star]', vc).forEach((b) => b.addEventListener('click', async () => {
       const rating = Number(b.dataset.star);
       try {
-        await db.rateSession(id, rating);
-        const s = sessions.find((x) => x.id === id);
-        s.rating = rating;
-        touched.add(id);
-        $$('[data-star]', card).forEach((x) => x.classList.toggle('on', Number(x.dataset.star) <= rating));
-        card.classList.remove('unread');
-        const pending = sessions.filter((x) => !x.rating).length;
-        $('#pending-badge').hidden = !pending;
-        $('#pending-badge').textContent = pending;
-        toast(`Calificado con ${rating} ${rating === 1 ? 'estrella' : 'estrellas'}`, 'ok');
+        await db.rateSet(vc.dataset.set, rating);
+        const s = sessions.find((x) => x.id === sessionId);
+        s.sets.find((x) => x.id === vc.dataset.set).rating = rating;
+        touched.add(sessionId);
+        $$('[data-star]', vc).forEach((x) => x.classList.toggle('on', Number(x.dataset.star) <= rating));
+        card.classList.toggle('unread', pendingOf(s));
+        updateBadge();
+        db.markReviewed(sessionId).catch(() => {});
+        toast(`Serie calificada con ${rating} ${rating === 1 ? 'estrella' : 'estrellas'}`, 'ok');
       } catch (err) { toast(err.message, 'error'); }
     }));
   });
@@ -145,6 +147,8 @@ function wireCards() {
       const msg = await db.sendMessage(form.dataset.reply, me.id, body);
       sessions.find((x) => x.id === form.dataset.reply).messages.push(msg);
       touched.add(form.dataset.reply);
+      db.markReviewed(form.dataset.reply).catch(() => {});
+      updateBadge();
       paintFeed();
       toast('Corrección enviada', 'ok');
     } catch (err) {
