@@ -121,12 +121,11 @@
   </div>
 </div>
 
-<div class="busy" id="busy" hidden aria-live="polite">
-  <div class="busy-box">
-    <div class="label" id="busy-title"></div>
-    <div class="busy-track"><div id="busy-bar"></div></div>
-    <p id="busy-text"></p>
-  </div>
+<!-- Videos subiéndose en segundo plano (no bloquea: se puede seguir entrenando) -->
+<div class="uploads" id="uploads" hidden aria-live="polite">
+  <div class="up-title" id="up-title"></div>
+  <div class="busy-track"><div id="up-bar"></div></div>
+  <div class="up-text">No cierres la página ni bloquees el celu hasta que termine.</div>
 </div>
 
 <input type="file" id="video-input" accept="video/*" hidden>

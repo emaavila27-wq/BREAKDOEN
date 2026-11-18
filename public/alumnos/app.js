@@ -350,6 +350,7 @@ function renderExercises() {
   $$('[data-vid]').forEach((b) => b.addEventListener('click', () => pickVideo(b)));
   $$('[data-reps]').forEach((inp) => inp.addEventListener('change', () => saveReps(inp)));
   updateProgress();
+  paintUploads();
 }
 
 const restOf = (ex) => Number(ex.rest) || DEFAULT_REST;
@@ -445,39 +446,96 @@ $('#video-input').addEventListener('change', async (e) => {
   if (!file || !btn) return;
   const [i, n] = btn.dataset.vid.split('-').map(Number);
   btn.disabled = true;
-  btn.textContent = 'Subiendo…';
   try {
     const log = await ensureLog(i, n);
-    let upload = file;
-    if (file.size > COMPRESS_OVER) {
-      busy(`Achicando el video (${Math.round(file.size / 1048576)} MB)…`, 'No cierres ni bloquees la pantalla: tarda lo mismo que dura el video.', 0);
-      upload = await compressVideo(file, (p) => busy(null, null, p));
-    }
-    busy('Subiendo el video…', `${Math.max(1, Math.round(upload.size / 1048576))} MB`, null);
-    const path = await db.uploadVideo(me.id, wk.sessionId, log.id, upload);
-    await db.updateSet(log.id, { video_path: path });
-    log.video_path = path;
-    persist();
-    toast('Video subido', 'ok');
+    enqueueVideo({ k: key(i, n), sessionId: wk.sessionId, log, file });
   } catch (err) {
     toast(err.message, 'error');
-  } finally {
-    busy(false);
   }
   renderExercises();
 });
 
-// Pantalla de espera mientras se achica o sube un video (progress null = sin porcentaje).
-function busy(title, text, progress) {
-  const el = $('#busy');
-  if (title === false) { el.hidden = true; return; }
-  el.hidden = false;
-  if (title) $('#busy-title').textContent = title;
-  if (text) $('#busy-text').textContent = text;
-  const bar = $('#busy-bar');
-  bar.classList.toggle('indeterminate', progress === null);
-  if (typeof progress === 'number') bar.style.width = `${Math.round(progress * 100)}%`;
+// ------------------------------------------- Videos en segundo plano
+// Los videos se achican y suben de a uno, sin bloquear la pantalla: el alumno
+// sigue entrenando (o navegando el portal) mientras tanto.
+const uploads = [];          // { k, sessionId, log, file, phase, progress }
+let uploading = false;
+
+function uploadJob(sessionId, k) {
+  return uploads.find((u) => u.sessionId === sessionId && u.k === k);
 }
+
+function enqueueVideo(job) {
+  uploads.push({ ...job, phase: 'wait', progress: 0 });
+  paintUploads();
+  if (!uploading) runUploads();
+}
+
+async function runUploads() {
+  uploading = true;
+  if (!wakeLock) navigator.wakeLock?.request('screen').then((l) => { wakeLock = l; }).catch(() => {});
+  while (uploads.length) {
+    const job = uploads[0];
+    try {
+      let file = job.file;
+      if (file.size > COMPRESS_OVER) {
+        job.phase = 'compress';
+        paintUploads();
+        file = await compressVideo(file, (p) => { job.progress = p; paintUploads(); });
+      }
+      job.phase = 'upload';
+      paintUploads();
+      const path = await db.uploadVideo(me.id, job.sessionId, job.log.id, file);
+      await db.updateSet(job.log.id, { video_path: path });
+      job.log.video_path = path;
+      // Si el entrenamiento sigue abierto, que quede guardado que la serie tiene video.
+      if (wk?.sessionId === job.sessionId && wk.logs[job.k]) { wk.logs[job.k].video_path = path; persist(); }
+      toast('Video subido ✓', 'ok');
+    } catch (err) {
+      toast(`No se pudo subir el video: ${err.message}`, 'error');
+    }
+    uploads.shift();
+    if (wk?.sessionId === job.sessionId && !$('#v-workout').hidden) renderExercises();
+    paintUploads();
+  }
+  uploading = false;
+  if (!wk) releaseWakeLock();
+}
+
+function paintUploads() {
+  const box = $('#uploads');
+  box.hidden = !uploads.length;
+  if (!uploads.length) return;
+  const job = uploads[0];
+  const more = uploads.length > 1 ? ` · ${uploads.length - 1} en espera` : '';
+  const mb = Math.round(job.file.size / 1048576);
+  $('#up-title').textContent = job.phase === 'compress'
+    ? `🎥 Achicando video (${mb} MB) · ${Math.round(job.progress * 100)}%${more}`
+    : job.phase === 'upload' ? `🎥 Subiendo video…${more}` : `🎥 Video en espera${more}`;
+  const bar = $('#up-bar');
+  bar.classList.toggle('indeterminate', job.phase !== 'compress');
+  bar.style.width = `${Math.round(job.progress * 100)}%`;
+  // En la fila de la serie, mostrar que su video se está procesando.
+  for (const u of uploads) {
+    const btn = wk?.sessionId === u.sessionId ? $(`[data-vid="${u.k}"]`) : null;
+    if (!btn) continue;
+    btn.disabled = true;
+    btn.classList.add('uploading');
+    btn.textContent = u === job && u.phase === 'compress' ? `${Math.round(u.progress * 100)}%` : '⏳';
+  }
+}
+
+// La pantalla queda prendida mientras se entrena o se procesan videos.
+function releaseWakeLock() {
+  if (uploads.length) return;
+  wakeLock?.release().catch(() => {});
+  wakeLock = null;
+}
+
+// Avisar si quiere cerrar la página con videos sin subir.
+addEventListener('beforeunload', (e) => {
+  if (uploads.length) { e.preventDefault(); e.returnValue = ''; }
+});
 
 // --------------------------------------------------- Contador de descanso
 const rest = { end: 0, total: 0, timer: null };
@@ -540,14 +598,15 @@ $('#go-finish').addEventListener('click', () => {
   if (!done && !confirm('No marcaste ninguna serie. ¿Terminar igual?')) return;
   closeRest();
   show('v-finish');
-  $('#finish-sum').textContent = `${wk.day.name} · ${done} series hechas · ${$('#wk-clock').textContent} de entrenamiento`;
+  $('#finish-sum').textContent = `${wk.day.name} · ${done} series hechas · ${$('#wk-clock').textContent} de entrenamiento`
+    + (uploads.length ? ' · Tus videos se siguen subiendo, podés enviar igual.' : '');
 });
 $('#back-to-workout').addEventListener('click', () => { show('v-workout'); updateProgress(); });
 $('#wk-exit').addEventListener('click', () => {
   // El progreso queda guardado: se puede continuar desde el inicio.
   clearInterval(clockTimer);
   closeRest();
-  wakeLock?.release().catch(() => {});
+  releaseWakeLock();
   renderHome();
 });
 
@@ -560,7 +619,7 @@ $('#f-finish').addEventListener('submit', async (e) => {
     await db.finishSession(wk.sessionId, f.sensaciones.value.trim());
     clearSaved();
     clearInterval(clockTimer);
-    wakeLock?.release().catch(() => {});
+    releaseWakeLock();
     wk = null;
     f.reset();
     toast('¡Entrenamiento enviado a tu coach! 🔥', 'ok');
