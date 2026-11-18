@@ -1,5 +1,5 @@
 import * as db from '/portal/db.js';
-import { $, $$, esc, when, duration, toast, groupSets, initials, TAGS, videosHtml, needsReview, exKey, exerciseFeedbackHtml, generalMessagesHtml } from '/portal/ui.js';
+import { $, $$, esc, when, duration, toast, groupSets, initials, TAGS, videosHtml, needsReview, exKey, exerciseFeedbackHtml, generalMessagesHtml, sendAllHtml, refreshSendAll } from '/portal/ui.js';
 import { SAMPLE_ROUTINE } from '/portal/sample-routine.js';
 
 let me = null;
@@ -99,6 +99,7 @@ function cardHtml(s) {
             ${exerciseFeedbackHtml(s, exKey(g), me.id, nameOf, `Corrección para ${g.exercise}…`)}
           </div>`).join('') : '<div class="m" style="color:var(--muted)">No marcó series.</div>'}
         ${generalMessagesHtml(s, me.id, nameOf)}
+        ${sendAllHtml(s, 'Enviar devolución')}
       </div>
     </article>`;
 }
@@ -114,45 +115,55 @@ function wireCards() {
     } catch (err) { slot.textContent = err.message; }
   }, { once: true }));
 
-  // Estrellas de cada video
-  $$('.video-card').forEach((vc) => {
-    const card = vc.closest('.sess');
+  $$('.sess').forEach((card) => {
     const sessionId = card.dataset.id;
-    $$('[data-star]', vc).forEach((b) => b.addEventListener('click', async () => {
-      const rating = Number(b.dataset.star);
-      try {
-        await db.rateSet(vc.dataset.set, rating);
-        const s = sessions.find((x) => x.id === sessionId);
-        s.sets.find((x) => x.id === vc.dataset.set).rating = rating;
-        touched.add(sessionId);
-        $$('[data-star]', vc).forEach((x) => x.classList.toggle('on', Number(x.dataset.star) <= rating));
-        card.classList.toggle('unread', pendingOf(s));
-        updateBadge();
-        db.markReviewed(sessionId).catch(() => {});
-        toast(`Serie calificada con ${rating} ${rating === 1 ? 'estrella' : 'estrellas'}`, 'ok');
-      } catch (err) { toast(err.message, 'error'); }
-    }));
-  });
+    // Estrellas marcadas que todavía no se mandaron: id de la serie → estrellas.
+    const ratings = new Map();
+    const refresh = () => refreshSendAll(card, ratings.size);
 
-  $$('[data-reply]').forEach((form) => form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const body = form.body.value.trim();
-    if (!body) return;
-    const btn = $('button', form);
-    btn.disabled = true;
-    try {
-      const msg = await db.sendMessage(form.dataset.reply, me.id, body, form.dataset.ex || null);
-      sessions.find((x) => x.id === form.dataset.reply).messages.push(msg);
-      touched.add(form.dataset.reply);
-      db.markReviewed(form.dataset.reply).catch(() => {});
-      updateBadge();
-      paintFeed();
-      toast('Corrección enviada', 'ok');
-    } catch (err) {
-      toast(err.message, 'error');
-      btn.disabled = false;
-    }
-  }));
+    $$('.video-card', card).forEach((vc) => {
+      $$('[data-star]', vc).forEach((b) => b.addEventListener('click', () => {
+        const rating = Number(b.dataset.star);
+        ratings.set(vc.dataset.set, rating);
+        $$('[data-star]', vc).forEach((x) => {
+          x.classList.toggle('on', Number(x.dataset.star) <= rating);
+          x.classList.toggle('changed', Number(x.dataset.star) <= rating);
+        });
+        refresh();
+      }));
+    });
+    $$('.ex-reply', card).forEach((t) => t.addEventListener('input', refresh));
+
+    // Botón único: manda estrellas y correcciones de todos los ejercicios juntos.
+    $('[data-send-all]', card)?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const replies = $$('.ex-reply', card).filter((t) => t.value.trim());
+      if (!ratings.size && !replies.length) return;
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
+      const s = sessions.find((x) => x.id === sessionId);
+      try {
+        // Lo que se va guardando se saca de la lista: si algo falla, no se duplica al reintentar.
+        for (const [setId, rating] of [...ratings]) {
+          await db.rateSet(setId, rating);
+          s.sets.find((x) => x.id === setId).rating = rating;
+          ratings.delete(setId);
+        }
+        for (const t of replies) {
+          s.messages.push(await db.sendMessage(sessionId, me.id, t.value.trim(), t.dataset.ex));
+          t.value = '';
+        }
+        await db.markReviewed(sessionId).catch(() => {});
+        touched.add(sessionId);
+        updateBadge();
+        paintFeed();
+        toast('Devolución enviada 🤘', 'ok');
+      } catch (err) {
+        toast(err.message, 'error');
+        refresh();
+      }
+    });
+  });
 }
 
 // ------------------------------------------------------------- Alumnos

@@ -81,13 +81,26 @@ export function needsReview(s, coachIds = []) {
 // Las correcciones van por ejercicio: cada mensaje guarda "bloque|ejercicio".
 export const exKey = (g) => `${g.block}|${g.exercise}`;
 
+// Hilo del ejercicio + campo para escribir. No tiene botón propio: todo se manda
+// junto con el botón único del entrenamiento (sendAllHtml).
 export function exerciseFeedbackHtml(s, key, meId, names, placeholder) {
   const msgs = s.messages.filter((m) => m.exercise === key);
   return `<div class="ex-feedback">${threadHtml(msgs, meId, names)}
-    <form class="reply" data-reply="${esc(s.id)}" data-ex="${esc(key)}">
-      <textarea name="body" rows="1" maxlength="2000" placeholder="${esc(placeholder)}"></textarea>
-      <button class="icon-btn ok" type="submit">Enviar</button>
-    </form></div>`;
+    <textarea class="ex-reply" data-ex="${esc(key)}" rows="1" maxlength="2000" placeholder="${esc(placeholder)}"></textarea></div>`;
+}
+
+// Botón único para mandar todo lo escrito (y calificado) en un entrenamiento.
+export function sendAllHtml(s, label) {
+  return `<div class="send-all"><button type="button" class="btn" data-send-all="${esc(s.id)}" data-label="${esc(label)}" disabled>${esc(label)}</button></div>`;
+}
+
+// Actualiza el botón único: cuántas cosas hay para mandar en esa tarjeta.
+export function refreshSendAll(card, extra = 0) {
+  const btn = card.querySelector('[data-send-all]');
+  if (!btn) return;
+  const n = [...card.querySelectorAll('.ex-reply')].filter((t) => t.value.trim()).length + extra;
+  btn.disabled = n === 0;
+  btn.textContent = n ? `${btn.dataset.label} (${n})` : btn.dataset.label;
 }
 
 // Mensajes de antes de las correcciones por ejercicio (sin ejercicio asignado).

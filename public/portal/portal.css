@@ -122,7 +122,11 @@ body.training main { padding-top: 84px; }
 .bubble.them { justify-self: start; background: #1f1f1f; border: 1px solid var(--line); }
 .reply { display: flex; gap: 8px; }
 .ex-feedback { display: grid; gap: 8px; margin-top: 10px; }
-.ex-feedback .reply textarea { min-height: 42px; font-size: 14px; }
+.ex-reply { width: 100%; min-height: 44px; padding: 10px; background: #0a0a0a; border: 1px solid var(--line); color: var(--text); font: 14px var(--body); resize: vertical; }
+.ex-reply:focus { outline: none; border-color: var(--red); }
+.send-all { display: flex; justify-content: flex-end; padding-top: 4px; }
+.send-all .btn[disabled] { opacity: .45; cursor: default; transform: none; }
+.stars.interactive button.changed { text-shadow: 0 0 10px rgba(242, 194, 48, .8); }
 .reply textarea { flex: 1; min-height: 46px; padding: 10px; background: #0a0a0a; border: 1px solid var(--line); color: var(--text); font: 15px var(--body); resize: vertical; }
 
 .badge { display: inline-block; min-width: 20px; padding: 2px 7px; background: var(--red); color: #fff; font: 900 11px var(--heavy); text-align: center; }

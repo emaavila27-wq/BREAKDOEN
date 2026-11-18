@@ -1,5 +1,5 @@
 import * as db from '/portal/db.js';
-import { $, $$, esc, tagHtml, starsHtml, when, duration, toast, groupSets, videosHtml, exKey, exerciseFeedbackHtml, generalMessagesHtml } from '/portal/ui.js';
+import { $, $$, esc, tagHtml, starsHtml, when, duration, toast, groupSets, videosHtml, exKey, exerciseFeedbackHtml, generalMessagesHtml, sendAllHtml, refreshSendAll } from '/portal/ui.js';
 import { compressVideo } from '/portal/compress.js';
 
 const DEFAULT_REST = 90;
@@ -189,6 +189,7 @@ function sessionHtml(s) {
             ${exerciseFeedbackHtml(s, exKey(g), me.id, names, 'Preguntale a tu coach sobre este ejercicio…')}
           </div>`).join('')}
         ${generalMessagesHtml(s, me.id, names)}
+        ${sendAllHtml(s, 'Enviar respuestas')}
       </div>
     </article>`;
 }
@@ -218,16 +219,28 @@ function wireVideos(root) {
 
 function wireSessions(root, sessions) {
   wireVideos(root);
-  $$('[data-reply]', root).forEach((form) => form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const body = form.body.value.trim();
-    if (!body) return;
-    try {
-      await db.sendMessage(form.dataset.reply, me.id, body, form.dataset.ex || null);
-      toast('Mensaje enviado', 'ok');
-      renderHistory();
-    } catch (err) { toast(err.message, 'error'); }
-  }));
+  $$('.sess', root).forEach((card) => {
+    $$('.ex-reply', card).forEach((t) => t.addEventListener('input', () => refreshSendAll(card)));
+    // Botón único: manda las respuestas de todos los ejercicios juntas.
+    $('[data-send-all]', card)?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const replies = $$('.ex-reply', card).filter((t) => t.value.trim());
+      if (!replies.length) return;
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
+      try {
+        for (const t of replies) {
+          await db.sendMessage(card.dataset.id, me.id, t.value.trim(), t.dataset.ex);
+          t.value = '';
+        }
+        toast('Respuestas enviadas a tu coach', 'ok');
+        renderHistory();
+      } catch (err) {
+        toast(err.message, 'error');
+        refreshSendAll(card);
+      }
+    });
+  });
   // Marca como vistas las novedades del coach.
   sessions.filter(unread).forEach((s) => db.markSeen(s.id).catch(() => {}));
 }
