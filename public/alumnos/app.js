@@ -157,6 +157,12 @@ async function renderHistory() {
     if (!sessions.length) { box.innerHTML = '<div class="empty">Todavía no terminaste ningún entrenamiento.</div>'; return; }
     box.innerHTML = sessions.map(sessionHtml).join('');
     wireSessions(box, sessions);
+    // En cada día de la rutina, avisa si tiene correcciones pendientes de la vez anterior.
+    (routine?.data?.days ?? []).forEach((d, i) => {
+      const n = Object.values(lastNotesFrom(sessions, d.name).notes).flat().length;
+      const meta = $(`[data-start="${i}"]`)?.closest('.day-card')?.querySelector('.d-meta');
+      if (n && meta) meta.insertAdjacentHTML('afterend', `<div class="d-notes">📝 ${n} ${n === 1 ? 'corrección' : 'correcciones'} de tu coach</div>`);
+    });
   } catch (err) {
     box.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
   }
@@ -259,11 +265,34 @@ function clearSaved() {
   try { localStorage.removeItem(SAVED); } catch { /* sin almacenamiento local */ }
 }
 
+// Correcciones del coach del último entrenamiento de ese mismo día que las tenga:
+// { notes: { "bloque|ejercicio": ["texto", …] }, date }.
+function lastNotesFrom(sessions, dayName) {
+  for (const s of sessions) {
+    if (s.day_name !== dayName) continue;
+    const notes = {};
+    for (const m of s.messages) {
+      if (m.exercise && m.author_id !== me.id) (notes[m.exercise] ??= []).push(m.body);
+    }
+    if (Object.keys(notes).length) return { notes, date: s.finished_at };
+  }
+  return { notes: {}, date: null };
+}
+
 async function startWorkout(day) {
   try {
+    const previous = await db.listSessions({ studentId: me.id }).then((ss) => lastNotesFrom(ss, day.name)).catch(() => ({ notes: {}, date: null }));
     const session = await db.startSession(me.id, day);
-    openWorkout({ userId: me.id, sessionId: session.id, day, startedAt: session.started_at, current: 0, logs: {} });
+    openWorkout({ userId: me.id, sessionId: session.id, day, startedAt: session.started_at, current: 0, logs: {}, notes: previous.notes, notesDate: previous.date });
   } catch (err) { toast(err.message, 'error'); }
+}
+
+const shortDate = new Intl.DateTimeFormat('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+function coachNoteHtml(ex) {
+  const notes = wk.notes?.[`${ex.block}|${ex.name}`];
+  if (!notes?.length) return '';
+  const when = wk.notesDate ? ` (${shortDate.format(new Date(wk.notesDate))})` : '';
+  return `<div class="coach-note"><b>📝 Tu coach te corrigió${esc(when)}</b>${notes.map((n) => `<span>${esc(n)}</span>`).join('')}</div>`;
 }
 
 let clockTimer;
@@ -302,6 +331,7 @@ function renderExercises() {
             <div class="ex-name">${esc(ex.name)}</div>
             <div class="ex-meta">${sets} × ${esc(ex.target || '')} · descanso ${restOf(ex)} s · ${doneCount}/${sets}</div>
             <div>${(ex.tags || []).map(tagHtml).join('')}</div>
+            ${coachNoteHtml(ex)}
           </div>
         </div>
         <div class="ex-body">
